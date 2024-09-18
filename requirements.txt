@@ -1,0 +1,11 @@
+jupyter==1.0.0
+galois==0.4.1
+python-dotenv==1.0.1
+scikit-learn==1.5.1
+scipy==1.14.1
+seaborn==0.13.2
+matplotlib==3.9.1
+numpy==2.0.0
+pandas==2.2.2
+pillow==10.4.0
+flake8==7.1.0

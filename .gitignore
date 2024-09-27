@@ -1,3 +1,7 @@
 .Trash*
 .ipynb_checkpoints
 images
+__pycache__
+Apple
+Grape
+plots

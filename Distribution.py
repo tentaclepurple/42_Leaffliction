@@ -5,27 +5,41 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from tqdm import tqdm
 from utils.OrganizeDirectories import organize_directories
+import pickle
+
 
 
 def is_image(filename):
     try:
-        with Image.open(filename) as img:
+        with Image.open(filename):
             return True
-    except:
+    except Exception:
         return False
+
 
 def count_images(directory):
     counter = Counter()
-    list = os.walk(directory)
-    for root, dirs, files in tqdm(list):
+    lst = os.walk(directory)
+    for root, dirs, files in lst:
         category = os.path.basename(root)
         for file in files:
-
             if is_image(os.path.join(root, file)):
                 counter[category] += 1
+
+    print(directory)
+    pickle_file = f"{directory}.pkl"
+    with open(pickle_file, 'wb') as f:
+        pickle.dump(counter, f)
+
+    print(counter)
+
     return counter
 
+
 def create_charts(data, directory_name):
+    if isinstance(data, Counter):
+        data = dict(data)
+
     labels = list(data.keys())
     values = list(data.values())
 
@@ -33,25 +47,26 @@ def create_charts(data, directory_name):
     plots_dir = 'plots'
     if not os.path.exists(plots_dir):
         os.makedirs(plots_dir)
+    
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 10))
 
     # Pie chart
-    plt.figure(figsize=(10, 5))
-    plt.pie(values, labels=labels, autopct='%1.1f%%', startangle=90)
-    plt.title(f'{directory_name} class distribution')
-    plt.axis('equal')
-    plt.savefig(f'plots/{directory_name}_pie_chart.png')
-    plt.close()
+    ax1.pie(values, labels=labels, autopct='%1.1f%%', startangle=90)
+    ax1.set_title(f'{directory_name} class distribution')
+    ax1.axis('equal')
 
     # Bar chart
-    plt.figure(figsize=(10, 5))
-    plt.bar(labels, values)
-    plt.title(f'{directory_name} class bar chart')
-    plt.xlabel('Categories')
-    plt.ylabel('Number of Images')
-    plt.xticks(rotation=45, ha='right')
+    ax2.bar(labels, values)
+    ax2.set_title(f'{directory_name} class bar chart')
+    ax2.set_xlabel('Categories')
+    ax2.set_ylabel('Number of Images')
+    ax2.tick_params(axis='x', rotation=45)
+
+    # Adjust layout and save
     plt.tight_layout()
-    plt.savefig(f'plots/{directory_name}_bar_chart.png')
+    plt.savefig(os.path.join(plots_dir, f'{directory_name}_class_charts.png'))
     plt.close()
+
 
 def main():
     if len(sys.argv) != 2:
@@ -66,7 +81,9 @@ def main():
     data = count_images(directory)
     create_charts(data, directory_name)
 
-    print(f"Charts have been saved as {directory_name}_pie_chart.png and {directory_name}_bar_chart.png in plot directory")
+    print(f"Charts have been saved as {directory_name}"
+          " in plot directory")
+
 
 if __name__ == "__main__":
     main()

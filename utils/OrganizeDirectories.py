@@ -32,7 +32,7 @@ def organize_directories(images_dir):
             elif item.lower().startswith('grape'):
                 shutil.move(item_path, os.path.join(grape_dir, item))
 
-    #remove_empty_directory(images_dir)
+    #remove_empty_directory(images_dir) #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     print("'Apple' and 'Grape' directories created")
 

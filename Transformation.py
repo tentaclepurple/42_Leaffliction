@@ -35,32 +35,6 @@ class Transformation:
         return self.mask """
         
     def create_mask(self):
-        # Aplicar desenfoque Gaussiano para reducir ruido
-        blurred = cv2.GaussianBlur(self.gray, (5, 5), 0)
-        
-        # Aplicar umbral de Otsu
-        _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-        
-        # Operaciones morfológicas para limpiar la máscara
-        kernel = np.ones((3,3), np.uint8)
-        opening = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel, iterations=2)
-        
-        # Dilatación para asegurar que capturamos toda la hoja
-        dilated = cv2.dilate(opening, kernel, iterations=3)
-        
-        # Invertir la máscara para que la hoja sea blanca y el fondo negro
-        mask_inv = cv2.bitwise_not(dilated)
-        
-        # Crear una imagen en blanco del mismo tamaño que la original
-        white_bg = np.full(self.image.shape, 255, dtype=np.uint8)
-        
-        # Usar la máscara para combinar la imagen original con el fondo blanco
-        result = cv2.bitwise_and(self.image, self.image, mask=dilated)
-        result = cv2.add(result, cv2.bitwise_and(white_bg, white_bg, mask=mask_inv))
-        
-        return result
-        
-    def create_mask(self):
         # Convertir la imagen a espacio de color HSV
         hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
 
@@ -69,30 +43,122 @@ class Transformation:
         upper_green = np.array([90, 255, 255])
 
         # Crear una máscara para las partes verdes
-        mask = cv2.inRange(hsv, lower_green, upper_green)
+        self.mask = cv2.inRange(hsv, lower_green, upper_green)
 
         # Aplicar operaciones morfológicas para limpiar la máscara
-        kernel = np.ones((5,5), np.uint8)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        kernel = np.ones((3,3), np.uint8)
+        self.mask = cv2.morphologyEx(self.mask, cv2.MORPH_CLOSE, kernel)
+        self.mask = cv2.morphologyEx(self.mask, cv2.MORPH_OPEN, kernel)
 
         # Invertir la máscara
-        mask_inv = cv2.bitwise_not(mask)
+        mask_inv = cv2.bitwise_not(self.mask)
 
         # Crear una imagen en blanco del mismo tamaño que la original
         white_bg = np.full(self.image.shape, 255, dtype=np.uint8)
 
         # Usar la máscara para combinar la imagen original con el fondo blanco
         result = cv2.bitwise_and(self.image, self.image, mask=mask_inv)
-        result = cv2.add(result, cv2.bitwise_and(white_bg, white_bg, mask=mask))
+        result = cv2.add(result, cv2.bitwise_and(white_bg, white_bg, mask=self.mask))
 
         return result
 
+    """ def roi_objects(self):
+        # Asegúrate de que la imagen haya sido cargada correctamente
+        if self.image is None:
+            raise ValueError("No se ha cargado la imagen correctamente.")
+
+        # Convertir la imagen a espacio de color HSV
+        hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
+
+        # Definir rango de color verde en HSV para la hoja
+        lower_green = np.array([35, 40, 40])  # Ajusta si es necesario
+        upper_green = np.array([85, 255, 255])
+
+        # Crear una máscara que capture el rango de color verde
+        mask = cv2.inRange(hsv, lower_green, upper_green)
+
+        # Aplicar operaciones morfológicas para limpiar la máscara
+        kernel = np.ones((5, 5), np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=2)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, iterations=2)
+
+        # Aplicar desenfoque gaussiano para suavizar la imagen y reducir el ruido
+        mask = cv2.GaussianBlur(mask, (5, 5), 0)
+
+        # Encontrar los contornos de los objetos en la máscara
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        if not contours:
+            print("No se encontraron contornos.")
+            return self.image.copy()
+
+        # Crear una imagen para visualizar el resultado con el fondo original
+        result = self.image.copy()
+
+        # Dibujar todos los contornos encontrados
+        cv2.drawContours(result, contours, -1, (0, 255, 0), 2)
+
+        # Dibujar un rectángulo alrededor de toda la región de interés
+        x, y, w, h = cv2.boundingRect(np.vstack(contours))  # Unión de todos los contornos
+        cv2.rectangle(result, (x, y), (x + w, y + h), (255, 0, 0), 3)
+
+        # Retorna la imagen con los contornos y el ROI dibujado
+        return result """
+    
     def roi_objects(self):
-        if self.mask is None:
-            self.create_mask()
-        contours, _ = cv2.findContours(self.mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        return cv2.drawContours(self.image.copy(), contours, -1, (0, 255, 0), 2)
+        # Asegúrate de que la imagen haya sido cargada correctamente
+        if self.image is None:
+            raise ValueError("No se ha cargado la imagen correctamente.")
+
+        # Convertir la imagen a espacio de color HSV
+        hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
+
+        # Definir rango de color verde en HSV para la hoja
+        lower_green = np.array([35, 40, 40])  # Ajusta si es necesario
+        upper_green = np.array([85, 255, 255])
+
+        # Crear una máscara que capture el rango de color verde
+        mask_green = cv2.inRange(hsv, lower_green, upper_green)
+
+        # Invertir la máscara para obtener las áreas no verdes (enfermas)
+        mask_diseased = cv2.bitwise_not(mask_green)
+
+        # Aplicar operaciones morfológicas para limpiar la máscara
+        kernel = np.ones((5, 5), np.uint8)
+        mask_diseased = cv2.morphologyEx(mask_diseased, cv2.MORPH_CLOSE, kernel, iterations=2)
+        mask_diseased = cv2.morphologyEx(mask_diseased, cv2.MORPH_OPEN, kernel, iterations=2)
+
+        # Aplicar desenfoque gaussiano para suavizar la imagen y reducir el ruido
+        mask_diseased = cv2.GaussianBlur(mask_diseased, (5, 5), 0)
+
+        # Encontrar los contornos de las áreas enfermas en la máscara
+        contours_diseased, _ = cv2.findContours(mask_diseased, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        # Si no se encontraron contornos de áreas enfermas, avisar
+        if not contours_diseased:
+            print("No se encontraron áreas enfermas.")
+            return self.image.copy()
+
+        # Crear una imagen para visualizar el resultado con el fondo original
+        result = self.image.copy()
+
+        # Dibujar todos los contornos de las áreas enfermas en verde
+        cv2.drawContours(result, contours_diseased, -1, (0, 255, 0), 2)
+
+        # Encontrar los contornos de la hoja usando la máscara verde
+        contours_leaf, _ = cv2.findContours(mask_green, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        if not contours_leaf:
+            print("No se encontraron contornos de la hoja.")
+            return result
+
+        # Dibujar un rectángulo alrededor de la hoja
+        x, y, w, h = cv2.boundingRect(np.vstack(contours_leaf))  # Unión de todos los contornos de la hoja
+        cv2.rectangle(result, (x, y), (x + w, y + h), (255, 0, 0), 3)
+
+        # Retorna la imagen con los contornos de las áreas enfermas y el ROI de la hoja dibujados
+        return result
+
 
     """ def analyze_object(self):
         gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)

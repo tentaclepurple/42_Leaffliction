@@ -3,7 +3,11 @@ from plantcv import plantcv as pcv
 import numpy as np
 import os
 import argparse
+import math
 import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+
+
 
 class Transformation:
     def __init__(self, image_path):
@@ -30,7 +34,7 @@ class Transformation:
         _, self.mask = cv2.threshold(self.gray, 120, 255, cv2.THRESH_BINARY)
         return self.mask """
         
-    """ def create_mask(self):
+    def create_mask(self):
         # Aplicar desenfoque Gaussiano para reducir ruido
         blurred = cv2.GaussianBlur(self.gray, (5, 5), 0)
         
@@ -54,7 +58,7 @@ class Transformation:
         result = cv2.bitwise_and(self.image, self.image, mask=dilated)
         result = cv2.add(result, cv2.bitwise_and(white_bg, white_bg, mask=mask_inv))
         
-        return result """
+        return result
         
     def create_mask(self):
         # Convertir la imagen a espacio de color HSV
@@ -90,14 +94,201 @@ class Transformation:
         contours, _ = cv2.findContours(self.mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         return cv2.drawContours(self.image.copy(), contours, -1, (0, 255, 0), 2)
 
-    def analyze_object(self):
-        if self.mask is None:
-            self.create_mask()
-        contours, _ = cv2.findContours(self.mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    """ def analyze_object(self):
+        gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+        _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+        contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         if contours:
-            main_contour = max(contours, key=cv2.contourArea)
-            return cv2.drawContours(self.image.copy(), [main_contour], 0, (255, 0, 0), 2)
-        return self.image.copy()
+            leaf_contour = max(contours, key=cv2.contourArea)
+        else:
+            return self.image
+        result = self.image.copy()
+        cv2.drawContours(result, [leaf_contour], -1, (255, 0, 255), 2)
+        moments = cv2.moments(leaf_contour)
+        cx = int(moments['m10'] / moments['m00'])
+        cy = int(moments['m01'] / moments['m00'])
+        angle = 0.5 * np.arctan2(2 * moments['mu11'], moments['mu20'] - moments['mu02'])
+        length = max(result.shape) // 2
+        end_point1 = (int(cx - length * np.cos(angle)), int(cy - length * np.sin(angle)))
+        end_point2 = (int(cx + length * np.cos(angle)), int(cy + length * np.sin(angle)))
+        cv2.line(result, end_point1, end_point2, (255, 0, 255), 2)
+        mask = np.zeros(gray.shape, np.uint8)
+        cv2.drawContours(mask, [leaf_contour], -1, 255, -1)
+        dist = cv2.distanceTransform(mask, cv2.DIST_L2, 5)
+        cv2.normalize(dist, dist, 0, 1.2, cv2.NORM_MINMAX)
+        _, dist_thresh = cv2.threshold(dist, 0.7, 1.0, cv2.THRESH_BINARY)
+        dist_thresh = (dist_thresh * 255).astype(np.uint8)
+        contours, _ = cv2.findContours(dist_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(result, contours, -1, (255, 0, 0), 2)
+
+        return result """
+    
+    """ def analyze_object(self):
+        gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+        _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+        contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if contours:
+            leaf_contour = max(contours, key=cv2.contourArea)
+        else:
+            return self.image
+        result = self.image.copy()
+        cv2.drawContours(result, [leaf_contour], -1, (255, 0, 255), 2)
+        
+        # Encontrar el punto más bajo del contorno (probablemente el rabo)
+        bottom_point = tuple(leaf_contour[leaf_contour[:, :, 1].argmax()][0])
+        
+        # Calcular los momentos y el centro de masa
+        moments = cv2.moments(leaf_contour)
+        cx = int(moments['m10'] / moments['m00'])
+        cy = int(moments['m01'] / moments['m00'])
+        
+        # Calcular el ángulo y la longitud basados en el rabo
+        angle = np.arctan2(cy - bottom_point[1], cx - bottom_point[0])
+        length = 360
+        #length = max(result.shape)  # Extender la línea a través de toda la imagen
+        print(length)
+        
+        # Calcular los puntos finales de la línea
+        start_x = int(bottom_point[0] - length * np.cos(angle))
+        start_y = int(bottom_point[1] - length * np.sin(angle))
+        end_x = int(bottom_point[0] + length * np.cos(angle))
+        end_y = int(bottom_point[1] + length * np.sin(angle))
+        
+        # Dibujar la línea
+        cv2.line(result, (start_x, start_y), (end_x, end_y), (255, 0, 255), 2)
+        
+        # Código para las líneas azules interiores (sin cambios)
+        mask = np.zeros(gray.shape, np.uint8)
+        cv2.drawContours(mask, [leaf_contour], -1, 255, -1)
+        dist = cv2.distanceTransform(mask, cv2.DIST_L2, 5)
+        cv2.normalize(dist, dist, 0, 1.2, cv2.NORM_MINMAX)
+        _, dist_thresh = cv2.threshold(dist, 0.7, 1.0, cv2.THRESH_BINARY)
+        dist_thresh = (dist_thresh * 255).astype(np.uint8)
+        contours, _ = cv2.findContours(dist_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(result, contours, -1, (255, 0, 0), 2)
+
+        return result """
+
+    """ def analyze_object(self):
+        #working most of times with
+        # Convertir la imagen a espacio de color HSV
+        hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
+        
+        # Definir rango de color verde en HSV
+        lower_green = np.array([25, 40, 40])
+        upper_green = np.array([85, 255, 255])
+        
+        # Crear máscara para el color verde
+        mask = cv2.inRange(hsv, lower_green, upper_green)
+        
+        # Aplicar operaciones morfológicas para limpiar la máscara
+        kernel = np.ones((5,5), np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        
+        # Encontrar contornos
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        if contours:
+            leaf_contour = max(contours, key=cv2.contourArea)
+        else:
+            return self.image
+        
+        result = self.image.copy()
+        cv2.drawContours(result, [leaf_contour], -1, (255, 0, 255), 2)
+        
+        # Encontrar el punto más bajo del contorno (probablemente el rabo)
+        bottom_point = tuple(leaf_contour[leaf_contour[:, :, 1].argmax()][0])
+        
+        # Calcular los momentos y el centro de masa
+        moments = cv2.moments(leaf_contour)
+        cx = int(moments['m10'] / moments['m00'])
+        cy = int(moments['m01'] / moments['m00'])
+        
+        # Calcular el ángulo y la longitud basados en el rabo
+        angle = np.arctan2(cy - bottom_point[1], cx - bottom_point[0])
+        length = 360
+        
+        # Calcular los puntos finales de la línea
+        start_x = int(bottom_point[0] - length * np.cos(angle))
+        start_y = int(bottom_point[1] - length * np.sin(angle))
+        end_x = int(bottom_point[0] + length * np.cos(angle))
+        end_y = int(bottom_point[1] + length * np.sin(angle))
+        
+        # Dibujar la línea
+        cv2.line(result, (start_x, start_y), (end_x, end_y), (255, 0, 255), 2)
+        
+        # Código para las líneas azules interiores
+        dist = cv2.distanceTransform(mask, cv2.DIST_L2, 5)
+        cv2.normalize(dist, dist, 0, 1.2, cv2.NORM_MINMAX)
+        _, dist_thresh = cv2.threshold(dist, 0.7, 1.0, cv2.THRESH_BINARY)
+        dist_thresh = (dist_thresh * 255).astype(np.uint8)
+        contours, _ = cv2.findContours(dist_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(result, contours, -1, (255, 0, 0), 2)
+
+        return result """
+    
+    def analyze_object(self):
+        hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
+        lower_green = np.array([25, 40, 40])
+        upper_green = np.array([85, 255, 255])
+        mask = cv2.inRange(hsv, lower_green, upper_green)
+        kernel = np.ones((5,5), np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        if contours:
+            leaf_contour = max(contours, key=cv2.contourArea)
+        else:
+            return self.image
+        
+        result = self.image.copy()
+        cv2.drawContours(result, [leaf_contour], -1, (255, 0, 255), 2)
+        
+        bottom_point = tuple(leaf_contour[leaf_contour[:, :, 1].argmax()][0])
+        moments = cv2.moments(leaf_contour)
+        cx = int(moments['m10'] / moments['m00'])
+        cy = int(moments['m01'] / moments['m00'])
+        
+        angle = np.arctan2(cy - bottom_point[1], cx - bottom_point[0])
+        length = 360
+        
+        start_x = int(bottom_point[0] - length * np.cos(angle))
+        start_y = int(bottom_point[1] - length * np.sin(angle))
+        end_x = int(bottom_point[0] + length * np.cos(angle))
+        end_y = int(bottom_point[1] + length * np.sin(angle))
+        
+        # Línea diagonal (eje principal)
+        cv2.line(result, (start_x, start_y), (end_x, end_y), (255, 0, 255), 2)
+        
+        # Línea vertical en el centro de la imagen
+        height, width = result.shape[:2]
+        center_x = width // 2
+        cv2.line(result, (center_x, 0), (center_x, height), (255, 0, 255), 2)
+        
+        # Línea horizontal (parte superior de la T)
+        cv2.line(result, (0, 0), (width, 0), (255, 0, 255), 2)
+        
+        # Encontrar punto de intersección
+        m = (end_y - start_y) / (end_x - start_x) if (end_x - start_x) != 0 else float('inf')
+        b = start_y - m * start_x if m != float('inf') else start_x
+        intersection_x = center_x
+        intersection_y = int(m * intersection_x + b) if m != float('inf') else start_y
+        
+        # Dibujar círculo en la intersección
+        cv2.circle(result, (intersection_x, intersection_y), 5, (255, 0, 255), -1)
+        
+        # Código para las líneas azules interiores (sin cambios)
+        dist = cv2.distanceTransform(mask, cv2.DIST_L2, 5)
+        cv2.normalize(dist, dist, 0, 1.2, cv2.NORM_MINMAX)
+        _, dist_thresh = cv2.threshold(dist, 0.7, 1.0, cv2.THRESH_BINARY)
+        dist_thresh = (dist_thresh * 255).astype(np.uint8)
+        contours, _ = cv2.findContours(dist_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(result, contours, -1, (255, 0, 0), 2)
+
+        return result
+
 
     def pseudolandmarks(self):
         corners = cv2.goodFeaturesToTrack(self.gray, 25, 0.01, 10)

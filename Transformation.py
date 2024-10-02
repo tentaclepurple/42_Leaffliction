@@ -97,7 +97,7 @@ class Transformation:
 
         hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
 
-        lower_green = np.array([35, 90, 90])
+        lower_green = np.array([35, 85, 85])
         upper_green = np.array([85, 255, 255])
 
         lower_brown = np.array([10, 40, 40])
@@ -134,53 +134,7 @@ class Transformation:
         cv2.rectangle(result, (x, y), (x + w, y + h), (255, 0, 0), 3)
 
         return result
-    
-        
-        #last working roi
-    """ def roi_objects(self):
-        # Asegúrate de que la imagen haya sido cargada correctamente
-        if self.image is None:
-            raise ValueError("No se ha cargado la imagen correctamente.")
 
-        # Convertir la imagen a espacio de color HSV
-        hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
-
-        # Definir rango de color verde en HSV para la hoja
-        lower_green = np.array([35, 40, 40])  # Ajusta si es necesario
-        upper_green = np.array([85, 255, 255])
-
-        # Crear una máscara que capture el rango de color verde
-        mask = cv2.inRange(hsv, lower_green, upper_green)
-
-        # Aplicar operaciones morfológicas para limpiar la máscara
-        kernel = np.ones((3, 3), np.uint8)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-
-        # Aplicar desenfoque gaussiano para suavizar la imagen y reducir el ruido
-        mask = cv2.GaussianBlur(mask, (5, 5), 0)
-
-        # Encontrar los contornos de los objetos en la máscara
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        if not contours:
-            print("No se encontraron contornos.")
-            return self.image.copy()
-
-        # Crear una imagen para visualizar el resultado con el fondo original
-        result = self.image.copy()
-
-        # Dibujar todos los contornos encontrados
-        cv2.drawContours(result, contours, -1, (0, 255, 0), 2)
-
-        # Dibujar un rectángulo alrededor de toda la región de interés
-        x, y, w, h = cv2.boundingRect(np.vstack(contours))  # Unión de todos los contornos
-        cv2.rectangle(result, (x, y), (x + w, y + h), (255, 0, 0), 3)
-
-        # Retorna la imagen con los contornos y el ROI dibujado
-        return result """
- 
-    
 
     def analyze_object(self):
         hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
@@ -193,49 +147,9 @@ class Transformation:
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
         if contours:
-            leaf_contour = max(contours, key=cv2.contourArea)
-        else:
-            return self.image
-        
-        result = self.image.copy()
-        cv2.drawContours(result, [leaf_contour], -1, (255, 0, 255), 2)
-        
-        bottom_point = tuple(leaf_contour[leaf_contour[:, :, 1].argmax()][0])
-        moments = cv2.moments(leaf_contour)
-        cx = int(moments['m10'] / moments['m00'])
-        cy = int(moments['m01'] / moments['m00'])
-        
-        angle = np.arctan2(cy - bottom_point[1], cx - bottom_point[0])
-        length = 360
-        
-        start_x = int(bottom_point[0] - length * np.cos(angle))
-        start_y = int(bottom_point[1] - length * np.sin(angle))
-        end_x = int(bottom_point[0] + length * np.cos(angle))
-        end_y = int(bottom_point[1] + length * np.sin(angle))
-        
-        cv2.line(result, (start_x, start_y), (end_x, end_y), (255, 0, 255), 2)
-        
-        height, width = result.shape[:2]
-        center_x = width // 2
-        cv2.line(result, (center_x, 0), (center_x, height), (255, 0, 255), 2)
-        
-        cv2.line(result, (0, 0), (width, 0), (255, 0, 255), 2)
-        
-        m = (end_y - start_y) / (end_x - start_x) if (end_x - start_x) != 0 else float('inf')
-        b = start_y - m * start_x if m != float('inf') else start_x
-        intersection_x = center_x
-        intersection_y = int(m * intersection_x + b) if m != float('inf') else start_y
-        
-        cv2.circle(result, (intersection_x, intersection_y), 5, (255, 0, 255), -1)
-        
-        dist = cv2.distanceTransform(mask, cv2.DIST_L2, 5)
-        cv2.normalize(dist, dist, 0, 1.2, cv2.NORM_MINMAX)
-        _, dist_thresh = cv2.threshold(dist, 0.7, 1.0, cv2.THRESH_BINARY)
-        dist_thresh = (dist_thresh * 255).astype(np.uint8)
-        contours, _ = cv2.findContours(dist_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        cv2.drawContours(result, contours, -1, (255, 0, 0), 2)
-
-        return result
+            main_contour = max(contours, key=cv2.contourArea)
+            return cv2.drawContours(self.image.copy(), [main_contour], 0, (255, 0, 0), 2)
+        return self.image.copy()
 
     def pseudolandmarks(self):
         corners = cv2.goodFeaturesToTrack(self.gray, 25, 0.01, 10)
@@ -247,13 +161,40 @@ class Transformation:
         return img_copy
 
     def color_histogram(self):
-        colors = ('b', 'g', 'r')
-        plt.figure()
-        for i, color in enumerate(colors):
-            hist = cv2.calcHist([self.image], [i], None, [256], [0, 256])
-            plt.plot(hist, color=color)
-            plt.xlim([0, 256])
-        return plt
+        hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
+        lab = cv2.cvtColor(self.image, cv2.COLOR_BGR2LAB)
+
+        channels = [
+            (self.image[:,:,0], 'blue'),
+            ((self.image[:,:,0] + self.image[:,:,2])/2, 'blue-yellow'),
+            (self.image[:,:,1], 'green'),
+            ((self.image[:,:,1] + self.image[:,:,2])/2, 'green-magenta'),
+            (self.image[:,:,2], 'red'),
+            (hsv[:,:,0], 'hue'),
+            (lab[:,:,0], 'lightness'),
+            (hsv[:,:,1], 'saturation'),
+            (hsv[:,:,2], 'value')
+        ]
+
+        fig, ax = plt.subplots(figsize=(12, 8))
+
+        colors = ['blue', 'yellow', 'green', 'magenta', 'red', 'purple', 'gray', 'cyan', 'orange']
+
+        for (channel, name), color in zip(channels, colors):
+            hist, _ = np.histogram(channel, bins=256, range=[0, 256])
+            hist = hist / hist.sum() * 100 
+            ax.plot(hist, color=color, label=name, alpha=0.7)
+
+        ax.set_xlim([0, 255])
+        ax.set_xlabel('Pixel intensity')
+        ax.set_ylabel('Proportion of pixels (%)')
+        ax.set_title('Color Histogram')
+        ax.grid(True, alpha=0.3)
+
+        ax.legend(title='Color Channel', bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.tight_layout()
+        
+        return fig
 
     def apply_transformations(self, transformations):
         results = {'Original': self.image}
@@ -270,9 +211,7 @@ class Transformation:
             results['Pseudolandmarks'] = self.pseudolandmarks()
         
         if 'histogram' in transformations:
-            plt.figure()
-            self.color_histogram()
-            results['ColorHistogram'] = plt
+            results['ColorHistogram'] = self.color_histogram()
         
         return results
 
@@ -283,24 +222,26 @@ def process_and_save(image_path, transformations, save_dir=None):
     if save_dir:
         os.makedirs(save_dir, exist_ok=True)
         for name, img in results.items():
-            if name == 'Color histogram':
-                img.savefig(os.path.join(save_dir, f"{name}.JPG"))
-                plt.close()
+            if name == 'ColorHistogram':
+                img.savefig(os.path.join(save_dir, f"{name}.png"))
+                plt.close(img)
             else:
-                cv2.imwrite(os.path.join(save_dir, f"{name}.JPG"), img)
+                cv2.imwrite(os.path.join(save_dir, f"{name}.png"), img)
     else:
         plt.figure(figsize=(20, 10))
         for i, (name, img) in enumerate(results.items(), 1):
-            if name != 'Color histogram':
+            if name != 'ColorHistogram':
                 plt.subplot(2, 3, i)
                 plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
                 plt.title(name)
                 plt.axis('off')
+            else:
+                plt.subplot(2, 3, i)
+                plt.imshow(img)
+                plt.title(name)
+                plt.axis('off')
         plt.tight_layout()
         plt.show()
-        
-        if 'histogram' in transformations:
-            results['Color histogram'].show()
 
 def main():
     parser = argparse.ArgumentParser(description='Apply image transformations for leaf analysis.')

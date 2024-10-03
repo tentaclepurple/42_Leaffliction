@@ -76,7 +76,6 @@ class Transformation:
         self.mask = cv2.morphologyEx(self.mask, cv2.MORPH_OPEN, kernel)
         mask_inv = cv2.bitwise_not(self.mask)
 
-
         combined_mask = cv2.bitwise_and(mask_inv, gaussmask)
 
         masked_image = pcv.apply_mask(
@@ -177,7 +176,6 @@ class Transformation:
         return result """
  
     
-
     def analyze_object(self):
         hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
         lower_green = np.array([25, 40, 40])
@@ -233,14 +231,127 @@ class Transformation:
 
         return result
 
-    def pseudolandmarks(self):
+    """ def pseudolandmarks(self):
         corners = cv2.goodFeaturesToTrack(self.gray, 25, 0.01, 10)
         img_copy = self.image.copy()
         if corners is not None:
             for corner in corners:
                 x, y = corner.ravel()
                 cv2.circle(img_copy, (int(x), int(y)), 3, (0, 0, 255), -1)
-        return img_copy
+        return img_copy """
+
+
+
+    """ def pseudolandmarks(self):
+        img_copy = self.image.copy()
+        pseudolandmarks = []
+
+        ### Corner Detection (Red Dots)
+        corners = cv2.goodFeaturesToTrack(self.gray, maxCorners=50, qualityLevel=0.01, minDistance=10)
+        if corners is not None:
+            for corner in corners:
+                x, y = corner.ravel()
+                cv2.circle(img_copy, (int(x), int(y)), 3, (0, 0, 255), -1)
+                pseudolandmarks.append(('corner', int(x), int(y)))
+
+        ### Edge Detection (Blue Dots)
+        edges = cv2.Canny(self.gray, 100, 200)
+        # Find edge points
+        edge_points = np.column_stack(np.where(edges > 0))
+        # Sample some edge points
+        np.random.shuffle(edge_points)
+        edge_samples = edge_points[:50]
+        for point in edge_samples:
+            y, x = point  # Note: y comes first in np.where output
+            cv2.circle(img_copy, (x, y), 3, (255, 0, 0), -1)
+            pseudolandmarks.append(('edge', x, y))
+
+        ### Contour Sampling (Green Dots)
+        _, thresh = cv2.threshold(self.gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        if contours:
+            leaf_contour = max(contours, key=cv2.contourArea)
+            contour_points = leaf_contour[:, 0, :]
+            # Sample points along the contour
+            num_points = 50
+            indices = np.linspace(0, len(contour_points), num_points, endpoint=False, dtype=int)
+            contour_samples = contour_points[indices]
+            for point in contour_samples:
+                x, y = point
+                cv2.circle(img_copy, (int(x), int(y)), 3, (0, 255, 0), -1)
+                pseudolandmarks.append(('contour', int(x), int(y)))
+
+        return img_copy """
+        
+        
+    def pseudolandmarks(self):
+        img_copy = self.image.copy()
+        
+        # 1. Detect corners (red)
+        corners = cv2.goodFeaturesToTrack(self.gray, 25, 0.01, 10)
+        if corners is not None:
+            for corner in corners:
+                x, y = corner.ravel()
+                cv2.circle(img_copy, (int(x), int(y)), 3, (0, 0, 255), -1)
+        
+        # 2. Detect edges using Canny (green)
+        edges = cv2.Canny(self.gray, 100, 200)
+        contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if contours:
+            main_contour = max(contours, key=cv2.contourArea)
+            epsilon = 0.02 * cv2.arcLength(main_contour, True)
+            approx = cv2.approxPolyDP(main_contour, epsilon, True)
+            for point in approx:
+                cv2.circle(img_copy, tuple(point[0]), 3, (0, 255, 0), -1)
+        
+        # 3. Find centroid of the object (blue)
+        _, thresh = cv2.threshold(self.gray, 0, 200, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        for contour in contours:
+            M = cv2.moments(contour)
+            if M["m00"] != 0:
+                cX = int(M["m10"] / M["m00"])
+                cY = int(M["m01"] / M["m00"])
+                cv2.circle(img_copy, (cX, cY), 3, (255, 0, 0), -1)
+        
+        return img_copy    
+        
+    
+    def pseudola(self):
+
+        from skimage.filters import frangi
+
+        # Convert to grayscale
+        gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+
+        # Enhance contrast
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        enhanced = clahe.apply(gray)
+
+        # Apply Frangi filter to enhance vein-like structures
+        veins = frangi(enhanced)
+        veins = (veins * 255).astype(np.uint8)
+
+        # Threshold the image to create a binary image
+        _, veins_binary = cv2.threshold(veins, 20, 255, cv2.THRESH_BINARY)
+
+        # Morphological operations to clean up the image
+        kernel = np.ones((3, 3), np.uint8)
+        veins_cleaned = cv2.morphologyEx(veins_binary, cv2.MORPH_OPEN, kernel)
+        veins_cleaned = cv2.morphologyEx(veins_cleaned, cv2.MORPH_CLOSE, kernel)
+
+        # Overlay the veins on the original image
+        img_veins = self.image.copy()
+        img_veins[veins_cleaned > 0] = [0, 0, 255]  # Mark veins in red
+
+        return img_veins
+
+
+
+    
+    
+    
+
 
     def color_histogram(self):
         colors = ('b', 'g', 'r')
@@ -264,7 +375,6 @@ class Transformation:
             results['AnalyzeObject'] = self.analyze_object()
         if 'landmarks' in transformations:
             results['Pseudolandmarks'] = self.pseudolandmarks()
-        
         if 'histogram' in transformations:
             plt.figure()
             self.color_histogram()

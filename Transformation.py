@@ -241,7 +241,7 @@ class Transformation:
 
         return fig
 
-    """ def apply_transformations(self, transformations):
+    def apply_transformations(self, transformations):
         results = {'Original': self.image}
 
         if 'blur' in transformations:
@@ -257,30 +257,9 @@ class Transformation:
         if 'histogram' in transformations:
             results['ColorHistogram'] = self.color_histogram()
 
-        return results """
-        
-    def apply_transformations(self, transformations, include_original=True):
-        results = {}
-        if include_original:
-            results['Original'] = self.image
-
-        if 'blur' in transformations:
-            results['GaussianBlur'] = self.gaussian_blur()
-        if 'mask' in transformations:
-            results['Mask'] = self.create_mask()
-        if 'roi' in transformations:
-            results['ROIobjects'] = self.roi_objects()
-        if 'analyze' in transformations:
-            results['AnalyzeObject'] = self.analyze_object()
-        if 'landmarks' in transformations:
-            results['Pseudolandmarks'] = self.pseudolandmarks()
-        if 'histogram' in transformations:
-            results['ColorHistogram'] = self.color_histogram()
-
         return results
-
-
-""" def process_and_save(image_path, transformations, save_dir=None, is_directory=False):
+        
+def process_and_save(image_path, transformations, save_dir=None, is_directory=False):
     print(f"Processing image: {image_path}")
     trans = Transformation(image_path)
     
@@ -311,7 +290,66 @@ class Transformation:
     
     plt.close('all')
     del results
-    del trans """
+    del trans
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='Apply image transformations for leaf analysis.'
+    )
+    parser.add_argument('input', help='Input image or directory')
+    parser.add_argument('-dst', '--destination',
+                        help='Destination directory for output')
+    parser.add_argument('-t', '--transformations', nargs='+',
+                        choices=['blur', 'mask', 'roi', 'analyze',
+                                 'landmarks', 'histogram'],
+                        default=['blur', 'mask', 'roi', 'analyze',
+                                 'landmarks', 'histogram'],
+                        help='Transformations to apply')
+
+    args = parser.parse_args()
+
+    if os.path.isfile(args.input):
+        process_and_save(args.input, args.transformations, args.destination)
+    elif os.path.isdir(args.input):
+        for filename in os.listdir(args.input):
+            if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.JPG')):
+                image_path = os.path.join(args.input, filename)
+                if args.destination:
+                    save_dir = os.path.join(args.destination,
+                                            os.path.splitext(filename)[0])
+                else:
+                    save_dir = None
+                process_and_save(image_path, args.transformations, save_dir)
+    else:
+        print("Invalid input. Please provide a valid image file or directory.")
+
+
+if __name__ == "__main__":
+    main()
+
+
+    """ def apply_transformations(self, transformations, include_original=True):
+        results = {}
+        if include_original:
+            results['Original'] = self.image
+
+        if 'blur' in transformations:
+            results['GaussianBlur'] = self.gaussian_blur()
+        if 'mask' in transformations:
+            results['Mask'] = self.create_mask()
+        if 'roi' in transformations:
+            results['ROIobjects'] = self.roi_objects()
+        if 'analyze' in transformations:
+            results['AnalyzeObject'] = self.analyze_object()
+        if 'landmarks' in transformations:
+            results['Pseudolandmarks'] = self.pseudolandmarks()
+        if 'histogram' in transformations:
+            results['ColorHistogram'] = self.color_histogram()
+
+        return results """
+
+
             
 """ def process_and_save(image_path, transformations, save_dir=None):
     trans = Transformation(image_path)
@@ -351,43 +389,10 @@ class Transformation:
             results['ColorHistogram'].show() """
 
 
-""" def main():
-    parser = argparse.ArgumentParser(
-        description='Apply image transformations for leaf analysis.'
-    )
-    parser.add_argument('input', help='Input image or directory')
-    parser.add_argument('-dst', '--destination',
-                        help='Destination directory for output')
-    parser.add_argument('-t', '--transformations', nargs='+',
-                        choices=['blur', 'mask', 'roi', 'analyze',
-                                 'landmarks', 'histogram'],
-                        default=['blur', 'mask', 'roi', 'analyze',
-                                 'landmarks', 'histogram'],
-                        help='Transformations to apply')
 
-    args = parser.parse_args()
-
-    if os.path.isfile(args.input):
-        process_and_save(args.input, args.transformations, args.destination)
-    elif os.path.isdir(args.input):
-        for filename in os.listdir(args.input):
-            if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.JPG')):
-                image_path = os.path.join(args.input, filename)
-                if args.destination:
-                    save_dir = os.path.join(args.destination,
-                                            os.path.splitext(filename)[0])
-                else:
-                    save_dir = None
-                process_and_save(image_path, args.transformations, save_dir)
-    else:
-        print("Invalid input. Please provide a valid image file or directory.")
-
-
-if __name__ == "__main__":
-    main() """
     
     
-""" def main():
+"""def main():
     parser = argparse.ArgumentParser(description='Apply image transformations for leaf analysis.')
     parser.add_argument('input', help='Input image or directory')
     parser.add_argument('-dst', '--destination', help='Destination directory for output')
@@ -419,10 +424,10 @@ if __name__ == "__main__":
     print("Processing completed.")
 
 if __name__ == "__main__":
-    main() """
+    main()"""
     
     
-def process_and_save(image_path, transformations, save_dir=None, is_directory=False):
+""" def process_and_save(image_path, transformations, save_dir=None, is_directory=False):
     print(f"Processing image: {image_path}")
     trans = Transformation(image_path)
     
@@ -481,4 +486,4 @@ def main():
     print("Processing completed.")
 
 if __name__ == "__main__":
-    main()
+    main() """

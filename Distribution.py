@@ -27,7 +27,7 @@ def count_images(directory):
                 counter[category] += 1
 
     print(directory)
-    pickle_file = f"{directory}.pkl"
+    pickle_file = f"utils/{directory}.pkl"
     with open(pickle_file, 'wb') as f:
         pickle.dump(counter, f)
 
@@ -72,6 +72,9 @@ def main():
     if len(sys.argv) != 2:
         print("Usage: python Distribution.py <directory>")
         sys.exit(1)
+
+    path = input('Write the directory name where the images are stored.\n'
+                 'Example: leaves/images: \n')
 
     organize_directories("images")
 

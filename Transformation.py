@@ -258,13 +258,11 @@ class Transformation:
             results['ColorHistogram'] = self.color_histogram()
 
         return results
-        
-def process_and_save(image_path, transformations, save_dir=None, is_directory=False):
+
+ 
+def process_and_save(image_path, transformations, save_dir=None):
     print(f"Processing image: {image_path}")
     trans = Transformation(image_path)
-    
-    if is_directory:
-        transformations = [t for t in transformations if t != 'histogram']
     
     results = trans.apply_transformations(transformations)
     
@@ -273,7 +271,8 @@ def process_and_save(image_path, transformations, save_dir=None, is_directory=Fa
     if save_dir:
         os.makedirs(save_dir, exist_ok=True)
         for name, img in results.items():
-            new_name = f"{base_name}Transform{name}.JPG"
+            #if name != 'Original':  # Excluir la imagen original
+            new_name = f"{base_name}_Transform_{name}.JPG"
             full_path = os.path.join(save_dir, new_name)
             
             if name == 'ColorHistogram':
@@ -292,198 +291,36 @@ def process_and_save(image_path, transformations, save_dir=None, is_directory=Fa
     del results
     del trans
 
-
 def main():
-    parser = argparse.ArgumentParser(
-        description='Apply image transformations for leaf analysis.'
-    )
+    parser = argparse.ArgumentParser(description='Apply image transformations for leaf analysis.')
     parser.add_argument('input', help='Input image or directory')
-    parser.add_argument('-dst', '--destination',
-                        help='Destination directory for output')
+    parser.add_argument('-dst', '--destination', help='Destination directory for output')
     parser.add_argument('-t', '--transformations', nargs='+',
-                        choices=['blur', 'mask', 'roi', 'analyze',
-                                 'landmarks', 'histogram'],
-                        default=['blur', 'mask', 'roi', 'analyze',
-                                 'landmarks', 'histogram'],
+                        choices=['blur', 'mask', 'roi', 'analyze', 'landmarks', 'histogram'],
+                        default=['blur', 'mask', 'roi', 'analyze', 'landmarks', 'histogram'],
                         help='Transformations to apply')
-
+    
     args = parser.parse_args()
-
+    
     if os.path.isfile(args.input):
-        process_and_save(args.input, args.transformations, args.destination)
+        if args.destination:
+            save_dir = os.path.join(args.destination, os.path.splitext(os.path.basename(args.input))[0])
+        else:
+            save_dir = None
+        process_and_save(args.input, args.transformations, save_dir)
     elif os.path.isdir(args.input):
+        input_dir_name = os.path.basename(os.path.normpath(args.input))
         for filename in os.listdir(args.input):
             if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.JPG')):
                 image_path = os.path.join(args.input, filename)
                 if args.destination:
-                    save_dir = os.path.join(args.destination,
-                                            os.path.splitext(filename)[0])
+                    # Crear la estructura de directorios deseada
+                    save_dir = os.path.join(args.destination, os.path.basename(os.path.dirname(args.input)), input_dir_name)
                 else:
-                    save_dir = None
+                    save_dir = args.input  # Guardar en el mismo directorio de entrada si no se especifica destino
                 process_and_save(image_path, args.transformations, save_dir)
     else:
         print("Invalid input. Please provide a valid image file or directory.")
 
-
 if __name__ == "__main__":
     main()
-
-
-    """ def apply_transformations(self, transformations, include_original=True):
-        results = {}
-        if include_original:
-            results['Original'] = self.image
-
-        if 'blur' in transformations:
-            results['GaussianBlur'] = self.gaussian_blur()
-        if 'mask' in transformations:
-            results['Mask'] = self.create_mask()
-        if 'roi' in transformations:
-            results['ROIobjects'] = self.roi_objects()
-        if 'analyze' in transformations:
-            results['AnalyzeObject'] = self.analyze_object()
-        if 'landmarks' in transformations:
-            results['Pseudolandmarks'] = self.pseudolandmarks()
-        if 'histogram' in transformations:
-            results['ColorHistogram'] = self.color_histogram()
-
-        return results """
-
-
-            
-""" def process_and_save(image_path, transformations, save_dir=None):
-    trans = Transformation(image_path)
-    results = trans.apply_transformations(transformations)
-    
-    # Extraer el nombre base del archivo original
-    base_name = os.path.splitext(os.path.basename(image_path))[0]
-    
-    if save_dir:
-        os.makedirs(save_dir, exist_ok=True)
-        for name, img in results.items():
-            # Construir el nuevo nombre de archivo
-            new_name = f"{base_name}Transform{name}.JPG"
-            
-            if name == 'ColorHistogram':
-                img.savefig(os.path.join(save_dir, new_name))
-                plt.close(img)
-            else:
-                cv2.imwrite(os.path.join(save_dir, new_name), img)
-    else:
-        plt.figure(figsize=(20, 10))
-        for i, (name, img) in enumerate(results.items(), 1):
-            if name != 'ColorHistogram':
-                plt.subplot(2, 3, i)
-                plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-                plt.title(name)
-                plt.axis('off')
-            else:
-                plt.subplot(2, 3, i)
-                plt.imshow(img)
-                plt.title(name)
-                plt.axis('off')
-        plt.tight_layout()
-        plt.show()
-        
-        if 'histogram' in transformations:
-            results['ColorHistogram'].show() """
-
-
-
-    
-    
-"""def main():
-    parser = argparse.ArgumentParser(description='Apply image transformations for leaf analysis.')
-    parser.add_argument('input', help='Input image or directory')
-    parser.add_argument('-dst', '--destination', help='Destination directory for output')
-    parser.add_argument('-t', '--transformations', nargs='+',
-                        choices=['blur', 'mask', 'roi', 'analyze', 'landmarks', 'histogram'],
-                        default=['blur', 'mask', 'roi', 'analyze', 'landmarks', 'histogram'],
-                        help='Transformations to apply')
-    
-    args = parser.parse_args()
-    
-    print(f"Input path: {args.input}")
-    print(f"Destination: {args.destination}")
-    print(f"Transformations: {args.transformations}")
-    
-    if os.path.isfile(args.input):
-        process_and_save(args.input, args.transformations, args.destination)
-    elif os.path.isdir(args.input):
-        for filename in os.listdir(args.input):
-            if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.JPG')):
-                image_path = os.path.join(args.input, filename)
-                if args.destination:
-                    save_dir = os.path.join(args.destination, os.path.splitext(filename)[0])
-                else:
-                    save_dir = os.path.dirname(image_path)
-                process_and_save(image_path, args.transformations, save_dir, is_directory=True)
-    else:
-        print("Invalid input. Please provide a valid image file or directory.")
-    
-    print("Processing completed.")
-
-if __name__ == "__main__":
-    main()"""
-    
-    
-""" def process_and_save(image_path, transformations, save_dir=None, is_directory=False):
-    print(f"Processing image: {image_path}")
-    trans = Transformation(image_path)
-    
-    # Aplicar transformaciones sin incluir la original
-    results = trans.apply_transformations(transformations, include_original=False)
-    
-    base_name = os.path.splitext(os.path.basename(image_path))[0]
-    
-    if save_dir is None:
-        save_dir = os.path.dirname(image_path)
-    
-    for name, img in results.items():
-        new_name = f"{base_name}Transform{name}.JPG"
-        full_path = os.path.join(save_dir, new_name)
-        
-        if name == 'ColorHistogram':
-            img.savefig(full_path)
-            plt.close(img)
-            print(f"Saved histogram: {full_path}")
-        elif isinstance(img, np.ndarray):
-            cv2.imwrite(full_path, img)
-            print(f"Saved image: {full_path}")
-        else:
-            print(f"Skipping unsupported type for {name}: {type(img)}")
-    
-    plt.close('all')  # Cerrar todas las figuras de matplotlib
-    del results
-    del trans
-
-
-def main():
-    parser = argparse.ArgumentParser(description='Apply image transformations for leaf analysis.')
-    parser.add_argument('input', help='Input image or directory')
-    parser.add_argument('-dst', '--destination', help='Destination directory for output')
-    parser.add_argument('-t', '--transformations', nargs='+',
-                        choices=['blur', 'mask', 'roi', 'analyze', 'landmarks', 'histogram'],
-                        default=['blur', 'mask', 'roi', 'analyze', 'landmarks', 'histogram'],
-                        help='Transformations to apply')
-    
-    args = parser.parse_args()
-    
-    print(f"Input path: {args.input}")
-    print(f"Destination: {args.destination}")
-    print(f"Transformations: {args.transformations}")
-    
-    if os.path.isfile(args.input):
-        process_and_save(args.input, args.transformations, args.destination)
-    elif os.path.isdir(args.input):
-        for filename in os.listdir(args.input):
-            if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.JPG')):
-                image_path = os.path.join(args.input, filename)
-                process_and_save(image_path, args.transformations, args.destination, is_directory=True)
-    else:
-        print("Invalid input. Please provide a valid image file or directory.")
-    
-    print("Processing completed.")
-
-if __name__ == "__main__":
-    main() """

@@ -124,6 +124,8 @@ class Augmentation:
 
     def sampling(self, method):
         file = self.specie + '.pkl'
+        file = os.path.join('utils', file)
+        
         with open(file, 'rb') as f:
             dic = pickle.load(f)
 
@@ -169,18 +171,26 @@ class Augmentation:
 
 
 if __name__ == '__main__':
-    
-    if len(sys.argv) != 2:
-        print("Usage: python Augmentation.py <specie>")
-        sys.exit(1)
+    try:
+        if len(sys.argv) != 2:
+            print("Usage: python Augmentation.py <specie>")
+            sys.exit(1)
 
-    aug = None
-    specie = sys.argv[1]
-    save_folder = "tests"
-    
-    aug = Augmentation(specie)
-    #aug.sampling("oversample")
-    aug.sampling("undersample")
-    
+        aug = None
+        specie = sys.argv[1]
 
-    #sampling("Apple", "oversample")
+        print("Chose a sampling method: 1 for oversample or 2 for undersample")
+        method = input()
+        
+        if method == "1":
+            method = "oversample"
+        elif method == "2":
+            method = "undersample"
+        else:
+            print("Invalid method")
+            sys.exit(1)
+        
+        aug = Augmentation(specie)
+        aug.sampling(method)
+    except Exception as e:
+        print(f"Error: {str(e)}")

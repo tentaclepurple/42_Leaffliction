@@ -124,6 +124,7 @@ class Augmentation:
 
     def sampling(self, method):
         file = self.specie + '.pkl'
+        file = file.replace("/", "")
         file = os.path.join('utils', file)
         
         with open(file, 'rb') as f:

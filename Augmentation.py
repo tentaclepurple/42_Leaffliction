@@ -4,6 +4,7 @@ import random
 import pickle
 import os
 import sys
+import shutil
 import time
 
 
@@ -15,6 +16,7 @@ class Augmentation:
     def get_img(self, path):
         try:
             self.img, mask, metadata = pcv.readimage(path)
+            return self.img
 
         except Exception as e:
             print(f"Error: {str(e)}")
@@ -137,6 +139,11 @@ class Augmentation:
             for folder, count in dic.items():
                 diff = max_count - count
                 self.oversample(folder, diff)
+            eval_output = "augmented_directory"
+            if not os.path.exists(eval_output):
+                os.makedirs(eval_output)
+            shutil.copytree(self.specie, f"{eval_output}/{self.specie}")
+        
         elif method == "undersample":
             del dic[min_class]
             for folder, count in dic.items():
@@ -147,9 +154,6 @@ class Augmentation:
             print("Sampling method error")
 
     def oversample(self, folder, diff):
-        eval_output = "augmented_directory"
-        if not os.path.exists(eval_output):
-            os.makedirs(eval_output)
         path = f"{self.specie}/{folder}"
         for _, _, files in os.walk(path):
             for i in range(diff):
@@ -158,10 +162,8 @@ class Augmentation:
                 img_path = f"{path}/{file}"
                 self.get_img(img_path)
                 aug_meth = self.chose_rand_method()
-                eval_path = f"{eval_output}/{name}_{aug_meth}_{i}{ext}"
                 same_path = f"{path}/{name}_{aug_meth}_{i}{ext}"
-                self.save_img(eval_path)
-                self.save_img(same_path)
+                self.save_img(same_path)        
 
     def undersampling(self, folder, diff):
         for _, _, files in os.walk(f"{self.specie}/{folder}"):
@@ -171,14 +173,61 @@ class Augmentation:
                 os.remove(path_to_remove)
 
 
+def is_image_file(file):
+    return file.endswith('.JPG')
+
+
+def apply_augmentation(file):
+    """
+    Applies all available augmentation methods to the given file and saves the results.
+    """
+    output = "single_image_augmented"
+
+    if not os.path.exists(output):
+        os.makedirs(output)
+
+    name, ext = os.path.splitext(os.path.basename(file))  # Ensure it's the base name of the file
+    
+    specie = file.split('/')[0]
+    aug = Augmentation(specie)
+    
+    if aug.get_img(file) is None:
+        print(f"Failed to load image: {file}")
+        return
+
+    aug_methods = [
+        "add_brightness",
+        "add_contrast",
+        "zoom",
+        "flip",
+        "rotate",
+        "blur"
+    ]
+
+    for method in aug_methods:
+
+        aug.get_img(file)
+        perc = random.randint(20, 100) 
+        msg = getattr(aug, method)(perc)
+        print(msg)
+        output_name = f"{output}/{name}_{method}{ext}"        
+        aug.save_img(output_name)
+        
+    print(f"All augmentation methods applied to {file}")
+    sys.exit(0)
+
+
 if __name__ == '__main__':
     try:
         if len(sys.argv) != 2:
-            print("Usage: python Augmentation.py <specie>")
+            print("Usage: python Augmentation.py <specie> "
+                    "or python Augmentation.py <file>")
             sys.exit(1)
 
-        aug = None
         specie = sys.argv[1]
+
+        if is_image_file(specie):
+            apply_augmentation(specie)
 
         print("Chose a sampling method: 1 for oversample or 2 for undersample")
         method = input()

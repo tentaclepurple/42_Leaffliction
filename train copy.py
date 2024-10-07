@@ -1,7 +1,6 @@
 import os
 import sys
-import json  # Para guardar el mapeo de clases
-from utils.SplitDataset import check_arguments
+from utils.SplitDataset import split_images, create_subdirectories, check_arguments
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import layers, models
 from tensorflow.keras.optimizers import Adam
@@ -9,31 +8,32 @@ from tensorflow.keras.callbacks import ModelCheckpoint
 import matplotlib.pyplot as plt
 
 
-def prepare_data(train_dir, validation_dir, batch_size=32):
+def prepare_data(train_dir, batch_size=32):
     """
-    Prepares the training and validation data generators.
+    Prepares the training data generator without augmentation.
     Normalization is applied (rescale=1./255).
     """
     print("Preparing data generators...")
 
-    # ImageDataGenerator for normalization
-    train_datagen = ImageDataGenerator(rescale=1./255)
-    validation_datagen = ImageDataGenerator(rescale=1./255)
+    # ImageDataGenerator for training (normalization only)
+    train_datagen = ImageDataGenerator(rescale=1./255, validation_split=0.2)  # 80/20 split
 
-    # Generator for training
+    # Generator for training (80% of the data)
     print("Creating training data generator...")
     train_generator = train_datagen.flow_from_directory(
         train_dir,
         batch_size=batch_size,
-        class_mode='categorical'
+        class_mode='categorical',
+        subset='training'
     )
 
-    # Generator for validation
+    # Generator for validation (20% of the data)
     print("Creating validation data generator...")
-    validation_generator = validation_datagen.flow_from_directory(
-        validation_dir,
+    validation_generator = train_datagen.flow_from_directory(
+        train_dir,
         batch_size=batch_size,
-        class_mode='categorical'
+        class_mode='categorical',
+        subset='validation'
     )
 
     return train_generator, validation_generator
@@ -78,12 +78,6 @@ def train_model(model, train_generator, validation_generator, epochs=10, save_mo
     """
     print(f"Starting training for {epochs} epochs...")
 
-    # Guardar los nombres de las clases
-    class_indices = train_generator.class_indices
-    with open('class_indices.json', 'w') as f:
-        json.dump(class_indices, f)
-    print("Class indices saved to class_indices.json")
-
     # Checkpoint to save the best model based on validation accuracy
     checkpoint = ModelCheckpoint(save_model_path, monitor='val_accuracy', save_best_only=True, verbose=1)
 
@@ -115,18 +109,19 @@ def main():
     split_images(base_dir, train_dir, validation_dir)
     print(f"Images successfully split into {train_dir} and {validation_dir}.")"""
 
-    # Step 2: Define the directories for train and validation
-    train_dir = 'Grape_train'
-    validation_dir = 'Grape_validation'
     
-    # Step 3: Prepare the data
-    train_generator, validation_generator = prepare_data(train_dir, validation_dir)
+    train_dir = 'Grape_train'
+    validation_dir = 'Grape_validation'    
+    
+    
+    # Step 4: Prepare the data
+    train_generator, validation_generator = prepare_data(train_dir)
 
-    # Step 4: Define the model
+    # Step 5: Define the model
     image_shape = train_generator.image_shape
     model = define_model(input_shape=image_shape, num_classes=train_generator.num_classes)
 
-    # Step 5: Train the model
+    # Step 6: Train the model
     print("Starting model training process...")
     train_model(model, train_generator, validation_generator, epochs=10)
 

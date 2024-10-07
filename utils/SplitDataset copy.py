@@ -3,7 +3,6 @@ import shutil
 import random
 import sys
 from tqdm import tqdm
-import cv2
 
 
 IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.JPG']
@@ -58,17 +57,6 @@ def is_image_file(filename):
     return ext in IMAGE_EXTENSIONS
 
 
-def is_correct_size(image_path, size=(250, 250)):
-    """
-    Check if an image has the correct size
-    """
-    img = cv2.imread(image_path)
-    if img is None:
-        return False
-    height, width = img.shape[:2]
-    return (width, height) == size
-
-
 def split_images(base_dir, train_dir, validation_dir, split_ratio=0.8):
     """
     Function to split images into
@@ -101,7 +89,7 @@ def split_images(base_dir, train_dir, validation_dir, split_ratio=0.8):
             if len(train_images) != expected_train_count:
                 print(f"Error: The number of training images in "
                       "'{class_folder}' doesn't match the expected "
-                      "count ({expected_train_count} images).")
+					  "count ({expected_train_count} images).")
                 sys.exit(1)
 
             if len(validation_images) != expected_val_count:
@@ -112,28 +100,21 @@ def split_images(base_dir, train_dir, validation_dir, split_ratio=0.8):
 
             # Move the images to the corresponding folders
             for img in train_images:
-                img_path = os.path.join(class_path, img)
-                
                 # Check if the file name contains 'histogram' and skip it if true
                 if 'histogram' in img:
                     print(f"Skipping file {img} because it contains 'histogram'")
-                    continue  # Skip this file and do not move it
+                    
+                    continue  # Skip this file and do not move it """
 
                 # Check if the file is a valid image
                 if not is_image_file(img):
-                    print(f"Skipping {img}: not a valid image file")
+                    # print(f"Skipping {img}: not a valid image file")
                     continue  # Skip files that are not images
 
-                # Check if the image has the correct size
-                if not is_correct_size(img_path):
-                    print(f"Skipping {img}: not 250x250 pixels")
-                    continue  # Skip images that are not 250x250
-
-                shutil.move(img_path, os.path.join(train_dir, class_folder, img))
+                shutil.move(os.path.join(class_path, img),
+                            os.path.join(train_dir, class_folder, img))
             
             for img in validation_images:
-                img_path = os.path.join(class_path, img)
-                
                 # Check if the file name contains 'histogram' and skip it if true
                 if 'histogram' in img:
                     print(f"Skipping file {img} because it contains 'histogram'")
@@ -144,15 +125,5 @@ def split_images(base_dir, train_dir, validation_dir, split_ratio=0.8):
                     print(f"Skipping {img}: not a valid image file")
                     continue
 
-                # Check if the image has the correct size
-                if not is_correct_size(img_path):
-                    print(f"Skipping {img}: not 250x250 pixels")
-                    continue  # Skip images that are not 250x250
-
-                shutil.move(img_path, os.path.join(validation_dir, class_folder, img))
-
-if __name__ == "__main__":
-    base_dir = check_arguments()
-    train_dir, validation_dir = create_subdirectories(base_dir)
-    split_images(base_dir, train_dir, validation_dir)
-    print("Image splitting completed successfully.")
+                shutil.move(os.path.join(class_path, img),
+                            os.path.join(validation_dir, class_folder, img))

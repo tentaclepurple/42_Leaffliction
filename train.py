@@ -1,12 +1,11 @@
-import os
 import sys
-import json  # Para guardar el mapeo de clases
+import json
 from utils.SplitDataset import check_arguments
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import layers, models
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import ModelCheckpoint
-import matplotlib.pyplot as plt
+from utils.SplitDataset import create_subdirectories, split_images
 
 
 def prepare_data(train_dir, validation_dir, batch_size=32):
@@ -43,12 +42,14 @@ def define_model(input_shape, num_classes=4):
     """
     Defines and compiles a Convolutional Neural Network (CNN) model.
     """
-    print(f"Defining CNN model with input shape: {input_shape} and {num_classes} classes...")
+    print(f"Defining CNN model with input shape: {input_shape} "
+          "and {num_classes} classes...")
 
     model = models.Sequential()
 
     # Convolutional layers
-    model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=input_shape))
+    model.add(layers.Conv2D(32, (3, 3), activation='relu',
+                            input_shape=input_shape))
     model.add(layers.MaxPooling2D((2, 2)))
 
     model.add(layers.Conv2D(64, (3, 3), activation='relu'))
@@ -63,29 +64,32 @@ def define_model(input_shape, num_classes=4):
     # Flatten and Dense layers
     model.add(layers.Flatten())
     model.add(layers.Dense(512, activation='relu'))
-    model.add(layers.Dense(num_classes, activation='softmax'))  # Number of classes
+    model.add(layers.Dense(num_classes, activation='softmax'))
 
     # Compile the model
-    model.compile(loss='categorical_crossentropy', optimizer=Adam(), metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy', optimizer=Adam(),
+                  metrics=['accuracy'])
 
     print("Model defined and compiled successfully.")
     return model
 
 
-def train_model(model, train_generator, validation_generator, epochs=10, save_model_path='best_model.keras'):
+def train_model(base_dir, model, train_generator, validation_generator,
+                epochs=10, save_model_path='best_model.keras'):
     """
     Trains the model and saves the best model based on validation accuracy.
     """
     print(f"Starting training for {epochs} epochs...")
 
-    # Guardar los nombres de las clases
     class_indices = train_generator.class_indices
-    with open('class_indices.json', 'w') as f:
+    with open(f'utils/{base_dir}_class_indices.json', 'w') as f:
         json.dump(class_indices, f)
     print("Class indices saved to class_indices.json")
 
     # Checkpoint to save the best model based on validation accuracy
-    checkpoint = ModelCheckpoint(save_model_path, monitor='val_accuracy', save_best_only=True, verbose=1)
+    save_model_path = f"utils/{base_dir}_{save_model_path}"
+    checkpoint = ModelCheckpoint(save_model_path, monitor='val_accuracy',
+                                 save_best_only=True, verbose=1)
 
     # Train the model
     history = model.fit(
@@ -93,7 +97,9 @@ def train_model(model, train_generator, validation_generator, epochs=10, save_mo
         steps_per_epoch=train_generator.samples // train_generator.batch_size,
         epochs=epochs,
         validation_data=validation_generator,
-        validation_steps=validation_generator.samples // validation_generator.batch_size,
+        validation_steps=(
+            validation_generator.samples // validation_generator.batch_size
+        ),
         callbacks=[checkpoint]
     )
 
@@ -102,36 +108,48 @@ def train_model(model, train_generator, validation_generator, epochs=10, save_mo
 
 
 def main():
-    # Step 1: Check the arguments
-    print("Checking arguments...")
+
     base_dir = check_arguments()
 
-    # Step 2: Create the training and validation folders
-    """ print(f"Creating training and validation folders from base directory: {base_dir}")
-    train_dir, validation_dir = create_subdirectories(base_dir)
+    str = input("Do you want to split the images into "
+                "training and validation folders? (Y/N): \n")
+    if str.lower() == 'y':
+        print(
+            f"Creating training and validation "
+            f"folders from base directory: {base_dir}"
+        )
+        train_dir, validation_dir = create_subdirectories(base_dir)
+        print(f"Splitting images into {train_dir} and {validation_dir}...")
+        split_images(base_dir, train_dir, validation_dir)
+        print(
+            f"Images successfully split into {train_dir} and {validation_dir}."
+        )
 
-    # Step 3: Split the images between training and validation
-    print(f"Splitting images into {train_dir} and {validation_dir}...")
-    split_images(base_dir, train_dir, validation_dir)
-    print(f"Images successfully split into {train_dir} and {validation_dir}.")"""
+    elif str.lower() == 'n':
+        train_dir = input("Enter the training directory name: \n")
+        validation_dir = input("Enter the validation directory name: \n")
 
-    # Step 2: Define the directories for train and validation
-    train_dir = 'Grape_train'
-    validation_dir = 'Grape_validation'
-    
-    # Step 3: Prepare the data
-    train_generator, validation_generator = prepare_data(train_dir, validation_dir)
+    else:
+        print("Invalid input.")
+        sys.exit(1)
 
-    # Step 4: Define the model
+    train_generator, validation_generator = prepare_data(train_dir,
+                                                         validation_dir)
+
     image_shape = train_generator.image_shape
-    model = define_model(input_shape=image_shape, num_classes=train_generator.num_classes)
+    model = define_model(input_shape=image_shape,
+                         num_classes=train_generator.num_classes)
 
-    # Step 5: Train the model
     print("Starting model training process...")
-    train_model(model, train_generator, validation_generator, epochs=10)
+    train_model(base_dir, model, train_generator,
+                validation_generator, epochs=10)
 
     print("Training process finished successfully.")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        sys.exit(1)

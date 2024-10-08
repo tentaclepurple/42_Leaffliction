@@ -1,6 +1,7 @@
 import cv2
 from plantcv import plantcv as pcv
 import numpy as np
+import sys
 import os
 import argparse
 import matplotlib.pyplot as plt
@@ -259,26 +260,26 @@ class Transformation:
 
         return results
 
-    
+
 def process_and_save(image_path, transformations, save_dir=None):
     print(f"Processing image: {image_path}")
     try:
         trans = Transformation(image_path)
         results = trans.apply_transformations(transformations)
-        
+
         if not results:
             print(f"No transformations were applied to {image_path}")
             return
-        
+
         base_name = os.path.splitext(os.path.basename(image_path))[0]
-        
+
         if save_dir:
             os.makedirs(save_dir, exist_ok=True)
             print(f"Saving results to: {save_dir}")
             for name, img in results.items():
                 new_name = f"{base_name}_Transform_{name}.JPG"
                 full_path = os.path.join(save_dir, new_name)
-                
+
                 if name == 'ColorHistogram':
                     img.savefig(full_path)
                     plt.close(img)
@@ -286,11 +287,11 @@ def process_and_save(image_path, transformations, save_dir=None):
                     cv2.imwrite(full_path, img)
                 else:
                     print(f"Unsupported type for {name}: {type(img)}")
-                
+
                 print(f"Saved: {full_path}")
         else:
             print("No save directory specified. Skipping save.")
-        
+
         plt.close('all')
         del results
         del trans
@@ -299,23 +300,31 @@ def process_and_save(image_path, transformations, save_dir=None):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Apply image transformations for leaf analysis.')
+    parser = argparse.ArgumentParser(
+        description='Apply image transformations for leaf analysis.'
+        )
     parser.add_argument('input', help='Input image or directory')
-    parser.add_argument('-dst', '--destination', help='Destination directory for output')
+    parser.add_argument('-dst', '--destination',
+                        help='Destination directory for output')
     parser.add_argument('-t', '--transformations', nargs='+',
-                        choices=['blur', 'mask', 'roi', 'analyze', 'landmarks', 'histogram'],
-                        default=['blur', 'mask', 'roi', 'analyze', 'landmarks', 'histogram'],
+                        choices=['blur', 'mask', 'roi',
+                                 'analyze', 'landmarks', 'histogram'],
+                        default=['blur', 'mask', 'roi',
+                                 'analyze', 'landmarks', 'histogram'],
                         help='Transformations to apply')
-    
+
     args = parser.parse_args()
-    
+
     print(f"Input: {args.input}")
     print(f"Destination: {args.destination}")
     print(f"Transformations: {args.transformations}")
-    
+
     if os.path.isfile(args.input):
         if args.destination:
-            save_dir = os.path.join(args.destination, os.path.splitext(os.path.basename(args.input))[0])
+            save_dir = os.path.join(args.destination,
+                                    os.path.splitext(
+                                        os.path.basename(args.input))[0]
+                                    )
         else:
             save_dir = None
         process_and_save(args.input, args.transformations, save_dir)
@@ -323,28 +332,33 @@ def main():
         input_dir = os.path.normpath(args.input)
         input_dir_name = os.path.basename(input_dir)
         parent_dir_name = os.path.basename(os.path.dirname(input_dir))
-        
+
         print(f"Processing directory: {input_dir}")
         print(f"Parent directory: {parent_dir_name}")
         print(f"Input directory: {input_dir_name}")
-        
+
         image_count = 0
         for filename in os.listdir(args.input):
             if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.JPG')):
                 image_path = os.path.join(args.input, filename)
                 if args.destination:
-                    save_dir = os.path.join(args.destination, parent_dir_name, input_dir_name)
+                    save_dir = os.path.join(args.destination,
+                                            parent_dir_name, input_dir_name)
                 else:
                     save_dir = args.input
                 process_and_save(image_path, args.transformations, save_dir)
                 image_count += 1
-        
+
         print(f"Processed {image_count} images")
     else:
         print("Invalid input. Please provide a valid image file or directory.")
-    
+
     print("Processing completed.")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        sys.exit(1)

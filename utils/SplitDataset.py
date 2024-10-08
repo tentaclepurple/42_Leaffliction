@@ -17,13 +17,13 @@ def check_arguments():
     if len(sys.argv) != 2:
         print("Usage: python train.py <directory>")
         sys.exit(1)
-    
+
     base_dir = sys.argv[1]
-    
+
     if not os.path.isdir(base_dir):
         print(f"Error: {base_dir} is not a valid directory.")
         sys.exit(1)
-    
+
     return base_dir
 
 
@@ -39,12 +39,14 @@ def create_subdirectories(base_dir):
     os.makedirs(train_dir, exist_ok=True)
     os.makedirs(validation_dir, exist_ok=True)
 
-    # Iterate over subdirectories in the base directory and create corresponding folders
+    # Iterate over subdirectories and create corresponding folders
     for class_folder in os.listdir(base_dir):
         class_path = os.path.join(base_dir, class_folder)
         if os.path.isdir(class_path):
             os.makedirs(os.path.join(train_dir, class_folder), exist_ok=True)
-            os.makedirs(os.path.join(validation_dir, class_folder), exist_ok=True)
+            os.makedirs(os.path.join(
+                validation_dir, class_folder
+            ), exist_ok=True)
 
     return train_dir, validation_dir
 
@@ -58,7 +60,7 @@ def is_image_file(filename):
     return ext in IMAGE_EXTENSIONS
 
 
-def is_correct_size(image_path, size=(250, 250)):
+def is_correct_size(image_path, size=(256, 256)):
     """
     Check if an image has the correct size
     """
@@ -80,12 +82,12 @@ def split_images(base_dir, train_dir, validation_dir, split_ratio=0.8):
 
     for class_folder in tqdm(os.listdir(base_dir)):
         class_path = os.path.join(base_dir, class_folder)
-        
+
         if os.path.isdir(class_path):
             # List all images in the class
             images = os.listdir(class_path)
             random.shuffle(images)
-            
+
             # Split the images according to the split_ratio
             split_point = int(len(images) * split_ratio)
             train_images = images[:split_point]
@@ -97,59 +99,51 @@ def split_images(base_dir, train_dir, validation_dir, split_ratio=0.8):
             if expected_val_count is None:
                 expected_val_count = len(validation_images)
 
-            # Check if the current class has the same number of images as expected
+            # Check if the current class has expected image number
             if len(train_images) != expected_train_count:
                 print(f"Error: The number of training images in "
-                      "'{class_folder}' doesn't match the expected "
-                      "count ({expected_train_count} images).")
+                      f"'{class_folder}' doesn't match the expected "
+                      f"count ({expected_train_count} images).")
                 sys.exit(1)
 
             if len(validation_images) != expected_val_count:
                 print(f"Error: The number of validation images in "
-                      "'{class_folder}' doesn't match the expected count "
-                      "({expected_val_count} images).")
+                      f"'{class_folder}' doesn't match the expected count "
+                      f"({expected_val_count} images).")
                 sys.exit(1)
 
             # Move the images to the corresponding folders
             for img in train_images:
                 img_path = os.path.join(class_path, img)
-                
-                # Check if the file name contains 'histogram' and skip it if true
-                if 'histogram' in img:
-                    print(f"Skipping file {img} because it contains 'histogram'")
-                    continue  # Skip this file and do not move it
 
-                # Check if the file is a valid image
-                if not is_image_file(img):
-                    print(f"Skipping {img}: not a valid image file")
-                    continue  # Skip files that are not images
-
-                # Check if the image has the correct size
-                if not is_correct_size(img_path):
-                    print(f"Skipping {img}: not 250x250 pixels")
-                    continue  # Skip images that are not 250x250
-
-                shutil.move(img_path, os.path.join(train_dir, class_folder, img))
-            
-            for img in validation_images:
-                img_path = os.path.join(class_path, img)
-                
-                # Check if the file name contains 'histogram' and skip it if true
-                if 'histogram' in img:
-                    print(f"Skipping file {img} because it contains 'histogram'")
-                    continue  # Skip this file and do not move it
-
-                # Check if the file is a valid image
-                if not is_image_file(img):
-                    print(f"Skipping {img}: not a valid image file")
+                if 'Histogram' in img:
                     continue
 
-                # Check if the image has the correct size
-                if not is_correct_size(img_path):
-                    print(f"Skipping {img}: not 250x250 pixels")
-                    continue  # Skip images that are not 250x250
+                if not is_image_file(img):
+                    continue
 
-                shutil.move(img_path, os.path.join(validation_dir, class_folder, img))
+                if not is_correct_size(img_path):
+                    continue
+                shutil.move(img_path, os.path.join(
+                    train_dir, class_folder, img
+                ))
+
+            for img in validation_images:
+                img_path = os.path.join(class_path, img)
+
+                if 'Histogram' in img:
+                    continue
+
+                if not is_image_file(img):
+                    continue
+
+                if not is_correct_size(img_path):
+                    continue
+
+                shutil.move(img_path, os.path.join(
+                    validation_dir, class_folder, img
+                ))
+
 
 if __name__ == "__main__":
     base_dir = check_arguments()

@@ -3,10 +3,8 @@ import sys
 from collections import Counter
 import matplotlib.pyplot as plt
 from PIL import Image
-from tqdm import tqdm
 from utils.OrganizeDirectories import organize_directories
 import pickle
-
 
 
 def is_image(filename):
@@ -26,11 +24,12 @@ def count_images(directory):
             if is_image(os.path.join(root, file)):
                 counter[category] += 1
 
-    print(directory)
     pickle_file = f"utils/{directory}.pkl"
-    with open(pickle_file, 'wb') as f:
-        pickle.dump(counter, f)
-
+    try:
+        with open(pickle_file, 'wb') as f:
+            pickle.dump(counter, f)
+    except FileNotFoundError:
+        pass
     print(counter)
 
     return counter
@@ -47,7 +46,7 @@ def create_charts(data, directory_name):
     plots_dir = 'plots'
     if not os.path.exists(plots_dir):
         os.makedirs(plots_dir)
-    
+
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 10))
 
     # Pie chart
@@ -62,7 +61,6 @@ def create_charts(data, directory_name):
     ax2.set_ylabel('Number of Images')
     ax2.tick_params(axis='x', rotation=45)
 
-    # Adjust layout and save
     plt.tight_layout()
     plt.savefig(os.path.join(plots_dir, f'{directory_name}_class_charts.png'))
     plt.close()
@@ -73,13 +71,23 @@ def main():
         print("Usage: python Distribution.py <directory>")
         sys.exit(1)
 
+    organize_directories("images")
+
     path = input('Write the directory name where the images are stored.\n'
                  'Example: leaves/images: \n')
 
-    organize_directories("images")
+    if 'augmented_directory' in path:
+        directory = f"augmented_directory/{sys.argv[1]}"
+        directory_name = os.path.basename(directory)
 
-    directory = sys.argv[1]
-    directory_name = os.path.basename(directory)
+    else:
+        directory = sys.argv[1]
+        directory_name = os.path.basename(directory)
+
+    print(f"directory: {directory} directory_name: {directory_name}")
+    print()
+
+    print(f"Counting images in {directory_name} directory...")
 
     data = count_images(directory)
     create_charts(data, directory_name)
@@ -89,4 +97,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(e)
+        sys.exit(1)

@@ -5,7 +5,6 @@ import pickle
 import os
 import sys
 import shutil
-import time
 
 
 class Augmentation:
@@ -25,7 +24,6 @@ class Augmentation:
         try:
             if self.img is not None:
                 pcv.print_image(self.img, save_path)
-                #print(f"Image saved in {save_path}")
             else:
                 print("Couldn't save the image")
         except Exception as e:
@@ -90,7 +88,7 @@ class Augmentation:
         # Apply contrast adjustment (no change in brightness, so beta is 0)
         self.img = cv2.convertScaleAbs(self.img, alpha=alpha, beta=0)
         return f"Added contrast with alpha {alpha}"
-    
+
     def add_brightness(self, percent):
         beta = int((percent / 100) * 255)
         if self.img is None:
@@ -128,7 +126,7 @@ class Augmentation:
         file = self.specie + '.pkl'
         file = file.replace("/", "")
         file = os.path.join('utils', file)
-        
+
         with open(file, 'rb') as f:
             dic = pickle.load(f)
 
@@ -140,16 +138,17 @@ class Augmentation:
                 diff = max_count - count
                 self.oversample(folder, diff)
             eval_output = "augmented_directory"
+            print("Copying augmented images to 'augmented_directory'")
             if not os.path.exists(eval_output):
                 os.makedirs(eval_output)
             shutil.copytree(self.specie, f"{eval_output}/{self.specie}")
-        
+
         elif method == "undersample":
             del dic[min_class]
             for folder, count in dic.items():
                 diff = count - min_count
                 self.undersampling(folder, diff)
-                
+
         else:
             print("Sampling method error")
 
@@ -163,12 +162,12 @@ class Augmentation:
                 self.get_img(img_path)
                 aug_meth = self.chose_rand_method()
                 same_path = f"{path}/{name}_{aug_meth}_{i}{ext}"
-                self.save_img(same_path)        
+                self.save_img(same_path)
 
     def undersampling(self, folder, diff):
         for _, _, files in os.walk(f"{self.specie}/{folder}"):
             for i in range(diff):
-                path_to_remove = f"{self.specie}/{folder}/{files[i]}" 
+                path_to_remove = f"{self.specie}/{folder}/{files[i]}"
                 print(f"Removing {files[i]} from {folder}")
                 os.remove(path_to_remove)
 
@@ -179,18 +178,19 @@ def is_image_file(file):
 
 def apply_augmentation(file):
     """
-    Applies all available augmentation methods to the given file and saves the results.
+    Applies all available augmentation
+    methods to the given file and saves the results.
     """
     output = "single_image_augmented"
 
     if not os.path.exists(output):
         os.makedirs(output)
 
-    name, ext = os.path.splitext(os.path.basename(file))  # Ensure it's the base name of the file
-    
+    name, ext = os.path.splitext(os.path.basename(file))
+
     specie = file.split('/')[0]
     aug = Augmentation(specie)
-    
+
     if aug.get_img(file) is None:
         print(f"Failed to load image: {file}")
         return
@@ -207,12 +207,12 @@ def apply_augmentation(file):
     for method in aug_methods:
 
         aug.get_img(file)
-        perc = random.randint(20, 100) 
+        perc = random.randint(20, 100)
         msg = getattr(aug, method)(perc)
         print(msg)
-        output_name = f"{output}/{name}_{method}{ext}"        
+        output_name = f"{output}/{name}_{method}{ext}"
         aug.save_img(output_name)
-        
+
     print(f"All augmentation methods applied to {file}")
     sys.exit(0)
 
@@ -221,7 +221,7 @@ if __name__ == '__main__':
     try:
         if len(sys.argv) != 2:
             print("Usage: python Augmentation.py <specie> "
-                    "or python Augmentation.py <file>")
+                  "or python Augmentation.py <file>")
             sys.exit(1)
 
         specie = sys.argv[1]
@@ -231,7 +231,7 @@ if __name__ == '__main__':
 
         print("Chose a sampling method: 1 for oversample or 2 for undersample")
         method = input()
-        
+
         if method == "1":
             method = "oversample"
         elif method == "2":
@@ -239,7 +239,7 @@ if __name__ == '__main__':
         else:
             print("Invalid method")
             sys.exit(1)
-        
+
         aug = Augmentation(specie)
         aug.sampling(method)
     except Exception as e:

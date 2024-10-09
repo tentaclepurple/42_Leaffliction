@@ -142,13 +142,15 @@ def main():
 
     if 'apple' in image_path.lower():
         species = 'Apple'
-        model_path = 'utils/Apple_best_model.keras'
     elif 'grape' in image_path.lower():
         species = 'Grape'
-        model_path = 'utils/Grape_best_model.keras'
     else:
         print("Error: Model not found for the provided image.")
         sys.exit(1)
+
+    model_path = input("Introduce the model file "
+                       "you want to use ('.keras'): \n")
+    model_path = f'utils/{model_path}'
 
     json_path = f'utils/{species}_class_indices.json'
     print(f"Loading class indices from {json_path}...")

@@ -30,7 +30,6 @@ def count_images(directory):
             pickle.dump(counter, f)
     except FileNotFoundError:
         pass
-    print(counter)
 
     return counter
 
@@ -71,10 +70,9 @@ def main():
         print("Usage: python Distribution.py <directory>")
         sys.exit(1)
 
-    organize_directories("images")
-
     path = input('Write the directory name where the images are stored.\n'
                  'Example: leaves/images: \n')
+    organize_directories(path)
 
     if 'augmented_directory' in path:
         directory = f"augmented_directory/{sys.argv[1]}"

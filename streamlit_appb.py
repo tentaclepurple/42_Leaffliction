@@ -16,6 +16,7 @@ def load_css():
         <style>
 
         [data-testid="stSidebar"][aria-expanded="false"]{
+            background-color: #1E1E1E;
             margin-left: -600px;
         }
         .main-title {

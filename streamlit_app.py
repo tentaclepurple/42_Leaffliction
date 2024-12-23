@@ -331,12 +331,12 @@ def main():
                         if result_path:
                             with col2:
                                 st.markdown('<div class="section-title">Result</div>' + '<br><br>', unsafe_allow_html=True)
-                                st.image(result_path, caption=f"{aug_method} Result", use_container_width=True)
                                 st.markdown('''
                                 <br>
                                 <br>
                                 <br>
                             ''', unsafe_allow_html=True)
+                                st.image(result_path, caption=f"{aug_method} Result", use_container_width=True)
             
             elif mode == "Transform":
                 trans_method = st.radio(

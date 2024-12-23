@@ -284,6 +284,12 @@ def main():
     # Sidebar con mode selection y descripción
     with st.sidebar:
         st.markdown('<div class="section-title">Analysis Mode</div>', unsafe_allow_html=True)
+        st.markdown('''
+                                    <br>
+                                    <br>
+                                    <br>
+                                    <br>
+                                ''', unsafe_allow_html=True)
         mode = st.radio("Select Analysis Mode", ["Augmentation", "Transform", "Predict"])
         
         # Mode description

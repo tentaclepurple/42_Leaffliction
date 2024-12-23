@@ -1,0 +1,6 @@
+[theme]
+primaryColor = "green"  # Cambia el color principal de la aplicación
+backgroundColor = "#0E1117"  # Color de fondo
+secondaryBackgroundColor = "#262730"  # Fondo secundario (por ejemplo, cajas)
+textColor = "#FAFAFA"  # Color del texto
+font = "sans serif"  # Fuente: "sans serif", "serif", "monospace"

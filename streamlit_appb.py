@@ -15,7 +15,9 @@ def load_css():
     st.markdown("""
         <style>
 
-        
+        [data-testid="stSidebar"][aria-expanded="false"]{
+            margin-left: -600px;
+        }
         .main-title {
             font-family: 'Helvetica Neue', sans-serif;
             color: #2ecc71;

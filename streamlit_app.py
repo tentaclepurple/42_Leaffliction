@@ -330,7 +330,12 @@ def main():
                         result_path = apply_augmentation(image_path, aug_method, intensity)
                         if result_path:
                             with col2:
-                                st.markdown('<div class="section-title">Result</div>' + '<br><br><br>', unsafe_allow_html=True)
+                                st.markdown('<div class="section-title">Result</div>', unsafe_allow_html=True)
+                                st.markdown('''
+                                    <br>
+                                    <br>
+                                    <br>
+                                ''', unsafe_allow_html=True)
                                 st.image(result_path, caption=f"{aug_method} Result", use_container_width=True)
             
             elif mode == "Transform":
@@ -345,6 +350,11 @@ def main():
                         if result_path:
                             with col2:
                                 st.markdown('<div class="section-title">Result/div>', unsafe_allow_html=True)
+                                st.markdown('''
+                                    <br>
+                                    <br>
+                                    <br>
+                                ''', unsafe_allow_html=True)
                                 st.image(result_path, caption=f"{trans_method} Result", use_container_width=True)
             
             elif mode == "Predict":
@@ -359,6 +369,11 @@ def main():
                         if result_path:
                             with col2:
                                 st.markdown('<div class="section-title">Analysis Results</div>', unsafe_allow_html=True)
+                                st.markdown('''
+                                    <br>
+                                    <br>
+                                    <br>
+                                ''', unsafe_allow_html=True)
                                 st.image(result_path, caption="Disease Analysis", use_container_width=True)
                                 
                                 st.markdown("### Confidence Levels")

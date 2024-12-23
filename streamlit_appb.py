@@ -13,7 +13,16 @@ tf.compat.v1.reset_default_graph()
 
 def load_css():
     st.markdown("""
+        <style>
+        [data-testid="stSidebar"][aria-expanded="false"]{
 
+            background-color: #1E1E1E;  # Opción 1: Negro mate
+            # background-color: #121212;  # Opción 2: Negro Material Design
+            # background-color: #0A0A0A;  # Opción 3: Negro profundo
+            # background-color: #1A1A1A;  # Opción 4: Negro carbón
+            # background-color: #141414;  # Opción 5: Negro Netflix
+            # background-color: #161616;  # Opción 6: Negro espacial
+        }
         [data-testid="stSidebar"][aria-expanded="false"]{
             background-color: #1A1A1A;
             margin-left: -600px;
@@ -284,11 +293,12 @@ def main():
     # Sidebar con mode selection y descripción
     with st.sidebar:
         st.markdown('''
-                    <br>
-                    <br>
-                    <br>
-                    <br>
-                ''', unsafe_allow_html=True)
+                                    
+                                    <br>
+                                    <br>
+                                    <br>
+                                    <br>
+                                ''', unsafe_allow_html=True)
         st.markdown('<div class="section-title">Analysis Mode</div>', unsafe_allow_html=True)
         mode = st.radio("Select Analysis Mode", ["Augmentation", "Transform", "Predict"])
         

@@ -14,7 +14,7 @@ tf.compat.v1.reset_default_graph()
 def load_css():
     st.markdown("""
         <style>
-        [data-testid="stSidebar"][aria-expanded="true"]{
+        [data-testid="stSidebar"][aria-expanded="false"]{
 
             background-color: #1E1E1E;  # Opción 1: Negro mate
             # background-color: #121212;  # Opción 2: Negro Material Design

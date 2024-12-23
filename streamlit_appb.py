@@ -16,8 +16,8 @@ def load_css():
         <style>
 
         [data-testid="stSidebar"][aria-expanded="true"]{
-            max-width: 300px;
-            min-width: 800px;
+            min-width: 200px;
+            max-width: 600px;
             background-color: #1A1A1A;
 
         }

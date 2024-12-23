@@ -15,8 +15,7 @@ def load_css():
     st.markdown("""
         <style>
         [data-testid="stSidebar"][aria-expanded="true"]{
-            min-width: 100px;
-            max-width: 800px;
+
             background-color: #1E1E1E;  # Opción 1: Negro mate
             # background-color: #121212;  # Opción 2: Negro Material Design
             # background-color: #0A0A0A;  # Opción 3: Negro profundo

@@ -86,7 +86,7 @@ def get_mode_description(mode):
             + "<br>" +
             "• Rotation: Helps model recognize leaves at different angles\n\n• Blur: Simulates different image qualities and focus levels\n\n• Flip: Creates mirror images to double the dataset\n\n• Zoom: Handles different distance variations\n\n• Contrast/Brightness: Adapts to various lighting conditions\n\n"
             + "<br>" +
-            "Please select an image below and apply different augmentation techniques, choose the intensity level with the slider, and click the button to see the results."
+            "Please select an image in the right and apply different augmentation techniques, choose the intensity level with the slider, and click the button to see the results."
         },
         "Transform": {
             "title": "About Image Transformation",
@@ -100,7 +100,7 @@ def get_mode_description(mode):
             "• Pseudolandmarks: Detects significant points for shape analysis\n\n"
             "• Histogram: Analyzes color distribution patterns\n\n"
             + "<br>" +
-            "Select an image below and apply different transformation techniques to observe the results."
+            "Select an image in the right and apply different transformation techniques to observe the results."
         },
         "Predict": {
             "title": "About Disease Prediction",
@@ -110,7 +110,7 @@ def get_mode_description(mode):
             + "<br>" +
             "Each model uses convolutional neural networks (CNNs) to analyze leaf patterns, colors, and textures for accurate disease classification.\n\nThe model accuracy is 95%\n\n"
             + "<br>" +
-            "Select an image below and choose the model type to predict the disease. Click the button to see the analysis results."
+            "Select an image in the right and choose the model type to predict the disease. Click the button to see the analysis results."
         }
     }
     return descriptions[mode]

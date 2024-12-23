@@ -293,7 +293,7 @@ def main():
     # Sidebar con mode selection y descripción
     with st.sidebar:
         st.markdown('''
-                    <p style=color: #95a5a6;">
+                    <p style=color: #1E1E1E;">
                     <br>
                     <br>
                     <br>

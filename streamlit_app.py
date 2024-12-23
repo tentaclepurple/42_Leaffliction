@@ -330,7 +330,7 @@ def main():
                         result_path = apply_augmentation(image_path, aug_method, intensity)
                         if result_path:
                             with col2:
-                                st.markdown('<div class="section-title">Result</div>', unsafe_allow_html=True)
+                                st.markdown('<div class="section-title">Result</div>' + '<br><br>', unsafe_allow_html=True)
                                 st.image(result_path, caption=f"{aug_method} Result", use_container_width=True)
             
             elif mode == "Transform":
@@ -344,7 +344,7 @@ def main():
                         result_path = apply_transformation(image_path, trans_method)
                         if result_path:
                             with col2:
-                                st.markdown('<div class="section-title">Result\n\n</div>' + '<br>', unsafe_allow_html=True)
+                                st.markdown('<div class="section-title">Result/div>', unsafe_allow_html=True)
                                 st.image(result_path, caption=f"{trans_method} Result", use_container_width=True)
             
             elif mode == "Predict":

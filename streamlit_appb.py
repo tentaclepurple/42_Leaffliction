@@ -15,7 +15,12 @@ def load_css():
     st.markdown("""
         <style>
 
+        [data-testid="stSidebar"][aria-expanded="true"]{
+            max-width: 300px;
+            min-width: 800px;
+            background-color: #1A1A1A;
 
+        }
         .main-title {
             font-family: 'Helvetica Neue', sans-serif;
             color: #2ecc71;

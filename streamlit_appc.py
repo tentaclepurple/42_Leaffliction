@@ -14,7 +14,7 @@ def load_css():
     st.markdown("""
         <style>
         [data-testid="stSidebar"][aria-expanded="true"]{
-            min-width: 400px;
+            min-width: 200px;
             max-width: 600px;
             background-color: #1A1A1A;
         }

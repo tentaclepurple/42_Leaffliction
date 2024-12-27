@@ -309,3 +309,136 @@ def predict_disease(image_path, model_type):
     except Exception as e:
         st.error(f"Error in prediction: {str(e)}")
         return None, None, None
+
+def main():
+    st.set_page_config(
+        page_title="Leaf Disease Analysis | TensorFlow AI",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
+    
+    load_css()
+    
+    # Main title
+    st.markdown(
+        """
+        <div class="main-title">
+            <h1>🍃 Advanced Leaf Disease Analysis</h1>
+            <p style="font-size: 1.2rem; color: #95a5a6;">
+            Powered by TensorFlow & Computer Vision | Deep Learning for Plant Pathology
+            </p>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
+    
+    # Sidebar con mode selection y descripción
+    with st.sidebar:
+        st.markdown('''
+                                    
+                                    <br>
+                                    <br>
+                                    <br>
+                                    <br>
+                                ''', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Analysis Mode</div>', unsafe_allow_html=True)
+        mode = st.radio("Select Analysis Mode", ["Augmentation", "Transform", "Predict"])
+        
+        # Mode description
+        mode_info = get_mode_description(mode)
+        st.markdown(
+            f"""
+            <div class="info-box">
+                <h3>{mode_info["title"]}</h3>
+                <p>{mode_info["content"]}</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    
+    # Main content
+    examples = load_example_images()
+    col1, col2 = st.columns([1, 1])
+    
+    with col1:
+        st.markdown('<div class="section-title">Input Image</div>', unsafe_allow_html=True)
+        selected_image = st.selectbox(
+            "Select an image for analysis",
+            [img["name"] for img in examples]
+        )
+        
+        if selected_image:
+            image_path = next(img["path"] for img in examples if img["name"] == selected_image)
+            st.image(image_path, caption="Selected Image", use_container_width=True)
+            
+            if mode == "Augmentation":
+                aug_method = st.radio(
+                    "Select Augmentation Method",
+                    ["Rotation", "Blur", "Flip", "Zoom", "Contrast", "Brightness"]
+                )
+                intensity = st.slider(
+                    "Adjust Intensity",
+                    min_value=0,
+                    max_value=100,
+                    value=50,
+                    help="Adjust the intensity of the augmentation effect"
+                )
+                
+                if st.button("Apply Augmentation", type="primary"):
+                    with st.spinner("Applying augmentation..."):
+                        result_path = apply_augmentation(image_path, aug_method, intensity)
+                        if result_path:
+                            with col2:
+                                st.markdown('<div class="section-title">Result</div>', unsafe_allow_html=True)
+                                st.markdown('''
+                                    <br>
+                                    <br>
+                                    <br>
+                                ''', unsafe_allow_html=True)
+                                st.image(result_path, caption=f"{aug_method} Result", use_container_width=True)
+            
+            elif mode == "Transform":
+                trans_method = st.radio(
+                    "Select Transformation Method",
+                    ["Gaussian Blur", "Mask", "ROI", "Object Analysis", "Pseudolandmarks", "Histogram"]
+                )
+                
+                if st.button("Apply Transform", type="primary"):
+                    with st.spinner("Applying transformation..."):
+                        result_path = apply_transformation(image_path, trans_method)
+                        if result_path:
+                            with col2:
+                                st.markdown('<div class="section-title">Result/div>', unsafe_allow_html=True)
+                                st.markdown('''
+                                    <br>
+                                    <br>
+                                    <br>
+                                ''', unsafe_allow_html=True)
+                                st.image(result_path, caption=f"{trans_method} Result", use_container_width=True)
+            
+            elif mode == "Predict":
+                model_type = st.radio(
+                    "Select Model Type",
+                    ["Apple", "Grape"]
+                )
+                
+                if st.button("Make Prediction", type="primary"):
+                    with st.spinner("Analyzing image..."):
+                        result_path, class_name, probabilities = predict_disease(image_path, model_type)
+                        if result_path:
+                            with col2:
+                                st.markdown('<div class="section-title">Analysis Results</div>', unsafe_allow_html=True)
+                                st.markdown('''
+                                    <br>
+                                    <br>
+                                    <br>
+                                ''', unsafe_allow_html=True)
+                                st.image(result_path, caption="Disease Analysis", use_container_width=True)
+                                
+                                st.markdown("### Confidence Levels")
+                                for class_name, prob in probabilities.items():
+                                    st.progress(prob)
+                                    st.markdown(f"**{class_name}**: {prob*100:.1f}%")
+
+if __name__ == "__main__":
+    main()

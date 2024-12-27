@@ -273,7 +273,7 @@ def predict_disease(image_path, model_type):
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         
         # Cargar modelo e índices desde Hugging Face
-        repo_id = "tu-usuario/leaf-disease-models"  # Reemplaza con tu repo
+        repo_id = "wolfframio/leaffliction"  # Reemplaza con tu repo
         model, class_indices = load_model_from_hub(model_type, repo_id)
         
         if model is None or class_indices is None:
@@ -309,7 +309,7 @@ def predict_disease(image_path, model_type):
     except Exception as e:
         st.error(f"Error in prediction: {str(e)}")
         return None, None, None
-
+    
 def main():
     st.set_page_config(
         page_title="Leaf Disease Analysis | TensorFlow AI",

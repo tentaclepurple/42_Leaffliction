@@ -222,49 +222,6 @@ def apply_transformation(image, trans_method):
         st.error(f"Error in transformation: {str(e)}")
         return None
 
-def predict_disease(image_path, model_type):
-    try:
-        # Load image
-        img = cv2.imread(image_path)
-        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        
-        # Cargar modelo e índices desde Hugging Face
-        repo_id = "wolfframio/leaffliction"  # Reemplaza con tu repo
-        model, class_indices = load_model_from_hub(model_type, repo_id)
-        
-        if model is None or class_indices is None:
-            return None, None, None
-        
-        # Prepare image
-        img_array = tf.keras.preprocessing.image.img_to_array(img_rgb)
-        img_array = np.expand_dims(img_array, axis=0)
-        img_array /= 255.0
-        
-        # Predict
-        predictions = model.predict(img_array)
-        predicted_class = np.argmax(predictions[0])
-        class_name = {v: k for k, v in class_indices.items()}[predicted_class]
-        
-        # Create result visualization
-        processed = cv2.imread(image_path)
-        height, width = processed.shape[:2]
-        
-        result = np.zeros((height + 60, width * 2, 3), dtype=np.uint8)
-        result[0:height, 0:width] = img
-        result[0:height, width:] = processed
-        
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        cv2.putText(result, f"Predicted: {class_name}", (10, height + 40), 
-                    font, 1, (255, 255, 255), 2)
-        
-        output_path = 'temp/prediction_result.jpg'
-        cv2.imwrite(output_path, result)
-        
-        return output_path, class_name, {k: float(predictions[0][v]) for k, v in class_indices.items()}
-    
-    except Exception as e:
-        st.error(f"Error in prediction: {str(e)}")
-        return None, None, None
 
 def predict_disease(image_path, model_type):
     try:
@@ -407,7 +364,7 @@ def main():
                         result_path = apply_transformation(image_path, trans_method)
                         if result_path:
                             with col2:
-                                st.markdown('<div class="section-title">Result/div>', unsafe_allow_html=True)
+                                st.markdown('<div class="section-title">Result</div>', unsafe_allow_html=True)
                                 st.markdown('''
                                     <br>
                                     <br>
